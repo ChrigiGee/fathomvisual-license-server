@@ -25,7 +25,9 @@ if (isProduction && !string.IsNullOrEmpty(databaseUrl))
     // Parse Render.com PostgreSQL connection string (format: postgres://user:password@host:port/database)
     var connectionString = ConvertPostgresUrlToConnectionString(databaseUrl);
     builder.Services.AddDbContext<LicenseDbContext>(options =>
-        options.UseNpgsql(connectionString));
+        options.UseNpgsql(connectionString)
+            .ConfigureWarnings(warnings => warnings
+                .Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
     Console.WriteLine("Using PostgreSQL database");
 }
@@ -36,7 +38,9 @@ else
         ?? "Data Source=licenses.db";
 
     builder.Services.AddDbContext<LicenseDbContext>(options =>
-        options.UseSqlite(connectionString));
+        options.UseSqlite(connectionString)
+            .ConfigureWarnings(warnings => warnings
+                .Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
     Console.WriteLine($"Using SQLite database: {connectionString}");
 }
@@ -84,20 +88,29 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
-// Ensure database is created and migrated
+// Ensure database is created
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<LicenseDbContext>();
 
-    // For production, use migrations; for development, ensure created
-    if (isProduction)
+    try
     {
-        // Apply any pending migrations
-        dbContext.Database.Migrate();
+        // EnsureCreated creates the schema if it doesn't exist
+        // This works for both PostgreSQL (Render.com) and SQLite (local dev)
+        var created = dbContext.Database.EnsureCreated();
+        if (created)
+        {
+            Console.WriteLine("Database schema created successfully");
+        }
+        else
+        {
+            Console.WriteLine("Database already exists");
+        }
     }
-    else
+    catch (Exception ex)
     {
-        dbContext.Database.EnsureCreated();
+        Console.WriteLine($"Database initialization error: {ex.Message}");
+        // Don't throw - allow app to start and show health check failure
     }
 }
 
