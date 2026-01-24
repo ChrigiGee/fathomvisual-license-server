@@ -1,0 +1,55 @@
+# Build artifacts
+bin/
+obj/
+out/
+
+# IDE and editor files
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet packages
+*.nupkg
+packages/
+
+# Test results
+TestResults/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Documentation (keep README for reference)
+*.md
+!README.md
+
+# SQLite database files (development only)
+*.db
+*.db-shm
+*.db-wal
+
+# Key files (should be generated/managed separately in production)
+keys/
+
+# Render.com configuration
+render.yaml
